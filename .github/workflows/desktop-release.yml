@@ -100,6 +100,13 @@ jobs:
       - name: Install desktop dependencies
         run: npm ci --prefix packages/desktop --no-audit --no-fund
 
+      - name: Write runtime release metadata
+        shell: bash
+        env:
+          TAG: ${{ github.event.release.tag_name || github.event.inputs.tag }}
+        run: |
+          node -e 'const fs=require("fs"); fs.writeFileSync("packages/desktop/build/runtime-release.json", JSON.stringify({tag: process.env.TAG}, null, 2) + "\n")'
+
       - name: Configure macOS signing
         if: matrix.target_os == 'darwin'
         shell: bash

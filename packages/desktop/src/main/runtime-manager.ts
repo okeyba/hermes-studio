@@ -27,6 +27,7 @@ import {
 const execFileAsync = promisify(execFile)
 const DEFAULT_RUNTIME_REPO = 'EKKOLearnAI/hermes-web-ui'
 const RUNTIME_MANIFEST_NAME = 'runtime-manifest.json'
+const PACKAGED_RUNTIME_RELEASE_NAME = 'runtime-release.json'
 
 type RuntimeManifest = {
   schema: number
@@ -57,7 +58,24 @@ function releaseTagCandidates(): string[] {
   if (override) return [override]
 
   const version = app.getVersion()
-  return Array.from(new Set([version, `v${version}`, 'latest']))
+  const candidates = [packagedRuntimeReleaseTag(), version, `v${version}`, 'latest']
+  return Array.from(new Set(candidates.filter((tag): tag is string => typeof tag === 'string' && tag.length > 0)))
+}
+
+function packagedRuntimeReleaseTag(): string | null {
+  const candidates = app.isPackaged
+    ? [join(process.resourcesPath, 'build', PACKAGED_RUNTIME_RELEASE_NAME)]
+    : [join(app.getAppPath(), 'build', PACKAGED_RUNTIME_RELEASE_NAME)]
+
+  for (const candidate of candidates) {
+    if (!existsSync(candidate)) continue
+    try {
+      const metadata = JSON.parse(readFileSync(candidate, 'utf-8')) as { tag?: unknown }
+      if (typeof metadata.tag === 'string' && metadata.tag.trim()) return metadata.tag.trim()
+    } catch {}
+  }
+
+  return null
 }
 
 function runtimeAssetUrl(assetName: string, tag: string): string {

@@ -33,6 +33,7 @@ extraResources:
       - "icon.ico"
       - "trayTemplate.png"
       - "trayWindows.png"
+      - "runtime-release.json"
   - from: "../.."
     to: "webui"
     filter:
