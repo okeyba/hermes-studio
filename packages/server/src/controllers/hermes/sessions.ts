@@ -1011,7 +1011,7 @@ function serializeAsText(title: string | null, messages: any[]): string {
 
 export async function getConversationMessagesPaginated(ctx: any) {
   const offset = ctx.query.offset ? parseInt(ctx.query.offset as string, 10) : 0
-  const limit = ctx.query.limit ? parseInt(ctx.query.limit as string, 10) : 50
+  const limit = ctx.query.limit ? parseInt(ctx.query.limit as string, 10) : 150
   const profile = requestedProfile(ctx)
 
   const { getSessionDetailPaginated } = await import('../../db/hermes/session-store')

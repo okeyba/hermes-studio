@@ -683,7 +683,7 @@ export async function getSessionDetailPaginatedFromDbWithProfile(
   sessionId: string,
   profile: string,
   offset = 0,
-  limit = 300,
+  limit = 150,
 ): Promise<PaginatedHermesSessionDetailResult | null> {
   const db = await openSessionDb(profile)
   try {

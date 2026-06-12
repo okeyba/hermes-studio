@@ -307,6 +307,37 @@ describe('group chat store streaming merge', () => {
     expect(store.contextStatus).toEqual(expect.objectContaining({ agentName: 'Worker', status: 'replying' }))
   })
 
+  it('loads group history in 150-message pages and stops at the 600-message display cap', async () => {
+    const store = await createJoinedStore()
+    store.loadedMessageCount = 450
+    store.totalMessages = 700
+    store.hasMoreBefore = true
+    const olderMessages = Array.from({ length: 150 }, (_, index) =>
+      assistantMessage({ id: `older-${index}`, timestamp: index + 1, content: `older ${index}` }),
+    )
+    groupChatApiMock.getRoomDetail.mockResolvedValueOnce({
+      room,
+      messages: olderMessages,
+      agents: [],
+      members: [],
+      total: 700,
+      offset: 450,
+      limit: 150,
+      hasMore: true,
+    })
+
+    await expect(store.loadOlderMessages()).resolves.toBe(true)
+
+    expect(groupChatApiMock.getRoomDetail).toHaveBeenCalledWith('room-1', { offset: 450, limit: 150 })
+    expect(store.loadedMessageCount).toBe(600)
+    expect(store.hasMoreBefore).toBe(true)
+    expect(store.hasReachedMessageDisplayLimit).toBe(true)
+
+    groupChatApiMock.getRoomDetail.mockClear()
+    await expect(store.loadOlderMessages()).resolves.toBe(false)
+    expect(groupChatApiMock.getRoomDetail).not.toHaveBeenCalled()
+  })
+
   it('ignores a stale reconnect join ack after the user switches rooms', async () => {
     const store = await createJoinedStore()
     let joinAck: Function | undefined

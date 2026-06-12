@@ -103,6 +103,7 @@ function openSessionInNewTab(sessionId: string) {
 
 function handleOutlineNavigate(target: { messageId: string; anchorId: string }) {
   messageListRef.value?.scrollToAnchor(target.messageId, target.anchorId);
+  if (isMobile.value) showOutline.value = false;
 }
 
 function toolPanelMaxWidth() {

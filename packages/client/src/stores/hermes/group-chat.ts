@@ -76,6 +76,8 @@ function uid(): string {
 }
 
 const STREAM_FINAL_CONTENT_RECOVERY_DELAY_MS = 300
+export const GROUP_CHAT_MESSAGE_PAGE_SIZE = 150
+export const GROUP_CHAT_MAX_DISPLAY_MESSAGES = 600
 
 function normalizeLocalFilePath(path: string): string {
     return /^[a-zA-Z]:\\/.test(path) ? path.replace(/\\/g, '/') : path
@@ -143,6 +145,9 @@ export const useGroupChatStore = defineStore('groupChat', () => {
     const loadedMessageCount = ref(0)
     const hasMoreBefore = ref(false)
     const isLoadingOlderMessages = ref(false)
+    const hasReachedMessageDisplayLimit = computed(() =>
+        hasMoreBefore.value && loadedMessageCount.value >= GROUP_CHAT_MAX_DISPLAY_MESSAGES,
+    )
 const currentUserAvatar = ref('')
 
     function resetMessagePaging() {
@@ -585,9 +590,11 @@ const currentUserAvatar = ref('')
         const roomId = currentRoomId.value
         if (!roomId || isLoadingOlderMessages.value || !hasMoreBefore.value) return false
         const offset = loadedMessageCount.value
+        if (offset >= GROUP_CHAT_MAX_DISPLAY_MESSAGES) return false
         isLoadingOlderMessages.value = true
         try {
-            const res = await getRoomDetail(roomId, { offset, limit: 300 })
+            const limit = Math.min(GROUP_CHAT_MESSAGE_PAGE_SIZE, GROUP_CHAT_MAX_DISPLAY_MESSAGES - offset)
+            const res = await getRoomDetail(roomId, { offset, limit })
             const existingIds = new Set(messages.value.map(message => message.id))
             const olderMessages = res.messages.filter(message => !existingIds.has(message.id))
             messages.value = [...olderMessages, ...messages.value]
@@ -820,6 +827,7 @@ const currentUserAvatar = ref('')
         loadedMessageCount,
         hasMoreBefore,
         isLoadingOlderMessages,
+        hasReachedMessageDisplayLimit,
         userId,
         userName,
         currentUserAvatar,

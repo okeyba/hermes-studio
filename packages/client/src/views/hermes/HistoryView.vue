@@ -55,10 +55,11 @@ const contextMenuX = ref(0)
 const contextMenuY = ref(0)
 let hermesSessionsRequestId = 0
 
-const HISTORY_PAGE_SIZE = 300
+const HISTORY_PAGE_SIZE = 150
 
 function handleOutlineNavigate(target: { messageId: string; anchorId: string }) {
   historyMessageListRef.value?.scrollToAnchor(target.messageId, target.anchorId)
+  if (isMobile.value) showOutline.value = false
 }
 
 function openNewChatPage() {

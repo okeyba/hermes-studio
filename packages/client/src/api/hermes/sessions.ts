@@ -112,7 +112,7 @@ export async function fetchSession(id: string, profile?: string | null): Promise
 export async function fetchSessionMessagesPage(
   id: string,
   offset: number,
-  limit = 300,
+  limit = 150,
   profile?: string | null,
 ): Promise<PaginatedSessionMessages | null> {
   try {

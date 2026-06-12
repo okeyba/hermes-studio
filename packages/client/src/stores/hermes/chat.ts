@@ -14,6 +14,9 @@ import { detectThinkingBoundary } from '@/utils/thinking-parser'
 // Re-export ContentBlock for convenience
 export type ContentBlock = ContentBlockImport
 
+export const LIVE_CHAT_MESSAGE_PAGE_SIZE = 150
+export const LIVE_CHAT_MAX_LOADED_MESSAGES = 300
+
 export interface Attachment {
   id: string
   name: string
@@ -790,7 +793,10 @@ export const useChatStore = defineStore('chat', () => {
     try {
       const target = sessions.value.find(s => s.id === sid)
       if (!target) return false
-      const limit = Math.max(target.loadedMessageCount || 300, 300)
+      const limit = Math.min(
+        Math.max(target.loadedMessageCount || LIVE_CHAT_MESSAGE_PAGE_SIZE, LIVE_CHAT_MESSAGE_PAGE_SIZE),
+        LIVE_CHAT_MAX_LOADED_MESSAGES,
+      )
       const detail = await fetchSessionMessagesPage(sid, 0, limit, activeSession.value?.profile)
       if (!detail) return false
       const mapped = mapHermesMessages(detail.messages || [])
@@ -1047,7 +1053,8 @@ export const useChatStore = defineStore('chat', () => {
     const target = sessions.value.find(s => s.id === sessionId)
     if (!target || target.isLoadingOlderMessages || !target.hasMoreBefore) return false
     const offset = target.loadedMessageCount || 0
-    const limit = 300
+    if (offset >= LIVE_CHAT_MAX_LOADED_MESSAGES) return false
+    const limit = Math.min(LIVE_CHAT_MESSAGE_PAGE_SIZE, LIVE_CHAT_MAX_LOADED_MESSAGES - offset)
     target.isLoadingOlderMessages = true
     try {
       const page = await fetchSessionMessagesPage(sessionId, offset, limit, target.profile)
