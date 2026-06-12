@@ -2734,7 +2734,7 @@ async function handleSessionModelCustomSubmit() {
   border-left: 1px solid $border-color;
   display: flex;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .chat-tool-resize-handle {
@@ -2801,6 +2801,7 @@ async function handleSessionModelCustomSubmit() {
   flex: 1;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 
 .chat-tool-tabs {
