@@ -2731,7 +2731,6 @@ async function handleSessionModelCustomSubmit() {
   min-width: 320px;
   max-width: 100%;
   background: $bg-card;
-  border-left: 1px solid $border-color;
   display: flex;
   min-height: 0;
   overflow: hidden;
@@ -2744,7 +2743,7 @@ async function handleSessionModelCustomSubmit() {
   bottom: 0;
   width: 14px;
   cursor: col-resize;
-  z-index: 3;
+  z-index: 20;
 
   &::after {
     content: "";
@@ -2755,6 +2754,7 @@ async function handleSessionModelCustomSubmit() {
     width: 1px;
     background: $border-color;
     transition: background $transition-fast;
+    z-index: 1;
   }
 
   &::before {
@@ -2767,13 +2767,15 @@ async function handleSessionModelCustomSubmit() {
     transform: translateY(-50%);
     border-radius: 999px;
     background:
+      linear-gradient($border-color, $border-color) center / 1px 100% no-repeat,
       linear-gradient($text-muted, $text-muted) center 9px / 2px 2px no-repeat,
       linear-gradient($text-muted, $text-muted) center 17px / 2px 2px no-repeat,
       linear-gradient($text-muted, $text-muted) center 25px / 2px 2px no-repeat,
-      $bg-card;
+      rgba($bg-card, 0.92);
     border: 1px solid $border-color;
     opacity: 0.78;
     transition: all $transition-fast;
+    z-index: 2;
   }
 
   &:hover::after {
@@ -2781,6 +2783,12 @@ async function handleSessionModelCustomSubmit() {
   }
 
   &:hover::before {
+    background:
+      linear-gradient(var(--accent-primary), var(--accent-primary)) center / 1px 100% no-repeat,
+      linear-gradient($text-muted, $text-muted) center 9px / 2px 2px no-repeat,
+      linear-gradient($text-muted, $text-muted) center 17px / 2px 2px no-repeat,
+      linear-gradient($text-muted, $text-muted) center 25px / 2px 2px no-repeat,
+      rgba($bg-card, 0.96);
     border-color: var(--accent-primary);
     opacity: 1;
   }
