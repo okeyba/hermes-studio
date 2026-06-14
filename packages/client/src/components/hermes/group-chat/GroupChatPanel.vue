@@ -1012,7 +1012,7 @@ export default defineComponent({ components: { CreateRoomForm } })
 .approval-float-actions {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 8px;
     margin-top: 10px;
     padding: 10px 4px 0;
