@@ -191,13 +191,6 @@ function truncateCodingAgentToolOutputEvent(event: CanonicalResponsesEvent): Can
   return event
 }
 
-function redactCodexPromptForLog(prompt: string): string {
-  return prompt
-    .replace(/(\[Current Hermes Web UI model run token: )([^\]\s]+)(\])/g, '$1<redacted>$3')
-    .replace(/\b(hwui_)[A-Za-z0-9._~+/-]+\b/g, '$1<redacted>')
-    .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, '<jwt redacted>')
-}
-
 function isPrintAgent(agentId: string): boolean {
   return agentId === 'claude-code' || agentId === 'codex'
 }
@@ -724,13 +717,6 @@ export class CodingAgentRunManager {
     run.printToolBlocks = new Map()
     run.currentChildStderr = ''
     run.runMarker = undefined
-
-    if (systemPrompt) {
-      console.log([
-        `[coding-agent-run] Codex developer_instructions prompt (${systemPrompt.length} chars, hermesMcpTools=${systemPrompt.includes('mcp__hermes-studio__')})`,
-        redactCodexPromptForLog(systemPrompt),
-      ].join('\n'))
-    }
 
     this.handleClaudePrintResponseEvent(run, {
       type: 'response.created',
