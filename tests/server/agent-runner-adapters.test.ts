@@ -70,6 +70,58 @@ describe('agent runner Responses adapters', () => {
     })
   })
 
+  it('groups parallel Responses function calls before Chat tool results', () => {
+    const body = {
+      input: [
+        { role: 'user', content: [{ type: 'input_text', text: 'check repo' }] },
+        { type: 'function_call', call_id: 'call_1', name: 'read_file', arguments: '{"path":"a.ts"}' },
+        { type: 'function_call', call_id: 'call_2', name: 'search', arguments: '{"q":"todo"}' },
+        { type: 'function_call_output', call_id: 'call_2', output: 'matches' },
+        { type: 'function_call_output', call_id: 'call_1', output: 'file text' },
+        { role: 'user', content: [{ type: 'input_text', text: 'continue' }] },
+      ],
+    }
+
+    expect(responsesToOpenAiChat(body, target).messages).toEqual([
+      { role: 'user', content: 'check repo' },
+      {
+        role: 'assistant',
+        content: null,
+        tool_calls: [
+          {
+            id: 'call_1',
+            type: 'function',
+            function: { name: 'read_file', arguments: '{"path":"a.ts"}' },
+          },
+          {
+            id: 'call_2',
+            type: 'function',
+            function: { name: 'search', arguments: '{"q":"todo"}' },
+          },
+        ],
+      },
+      { role: 'tool', tool_call_id: 'call_1', content: 'file text' },
+      { role: 'tool', tool_call_id: 'call_2', content: 'matches' },
+      { role: 'user', content: 'continue' },
+    ])
+  })
+
+  it('drops incomplete Responses function call history for Chat providers', () => {
+    const body = {
+      input: [
+        { role: 'user', content: [{ type: 'input_text', text: 'hello' }] },
+        { type: 'function_call', call_id: 'call_missing', name: 'search', arguments: '{"q":"x"}' },
+        { role: 'user', content: [{ type: 'input_text', text: 'next turn' }] },
+        { type: 'function_call_output', call_id: 'orphan_call', output: 'orphan' },
+      ],
+    }
+
+    expect(responsesToOpenAiChat(body, target).messages).toEqual([
+      { role: 'user', content: 'hello' },
+      { role: 'user', content: 'next turn' },
+    ])
+  })
+
   it('converts Responses input to Anthropic messages', () => {
     const body = {
       instructions: 'system text',

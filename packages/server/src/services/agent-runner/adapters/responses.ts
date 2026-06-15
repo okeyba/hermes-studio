@@ -57,32 +57,54 @@ function responsesInputToChatMessages(body: any): any[] {
     return messages
   }
 
+  let pendingToolCalls: Array<{ id: string; type: 'function'; function: { name: string; arguments: string } }> = []
+  let pendingToolOutputs = new Map<string, any>()
+  const flushCompletedToolCalls = () => {
+    if (!pendingToolCalls.length) return
+    const outputs = pendingToolCalls.map(call => pendingToolOutputs.get(call.id))
+    if (outputs.every(Boolean)) {
+      messages.push({
+        role: 'assistant',
+        content: null,
+        tool_calls: pendingToolCalls,
+      })
+      for (let index = 0; index < pendingToolCalls.length; index += 1) {
+        messages.push({
+          role: 'tool',
+          tool_call_id: pendingToolCalls[index].id,
+          content: stringifyContent(outputs[index].output),
+        })
+      }
+    }
+    pendingToolCalls = []
+    pendingToolOutputs = new Map()
+  }
+
   for (const item of Array.isArray(input) ? input : []) {
     if (!item || typeof item !== 'object') continue
     if (item.type === 'function_call') {
       const callId = String(item.call_id || item.id || `call_${messages.length}`)
-      messages.push({
-        role: 'assistant',
-        content: null,
-        tool_calls: [{
-          id: callId,
-          type: 'function',
-          function: {
-            name: String(item.name || 'tool'),
-            arguments: String(item.arguments || '{}'),
-          },
-        }],
+      pendingToolCalls.push({
+        id: callId,
+        type: 'function',
+        function: {
+          name: String(item.name || 'tool'),
+          arguments: String(item.arguments || '{}'),
+        },
       })
       continue
     }
     if (item.type === 'function_call_output') {
-      messages.push({
-        role: 'tool',
-        tool_call_id: String(item.call_id || ''),
-        content: stringifyContent(item.output),
-      })
+      const callId = String(item.call_id || '')
+      if (pendingToolCalls.some(call => call.id === callId)) {
+        pendingToolOutputs.set(callId, item)
+        if (pendingToolCalls.every(call => pendingToolOutputs.has(call.id))) {
+          flushCompletedToolCalls()
+        }
+      }
       continue
     }
+    flushCompletedToolCalls()
     if (item.role) {
       messages.push({
         role: chatRoleForResponsesRole(item.role),
@@ -90,6 +112,7 @@ function responsesInputToChatMessages(body: any): any[] {
       })
     }
   }
+  flushCompletedToolCalls()
 
   return messages.length ? messages : [{ role: 'user', content: '' }]
 }
