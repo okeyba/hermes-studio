@@ -445,6 +445,7 @@ export default {
       steer: '활성 Bridge 실행에 지시 텍스트 보내기',
       destroy: '이 세션의 Bridge Agent 해제',
       reloadMcp: 'MCP 서버 다시 로드',
+      reloadSkills: '스킬 명령 다시 로드',
     },
     attachFiles: '파일 첨부',
     reasoningEffort: {

@@ -446,6 +446,7 @@ export default {
       steer: 'Send steering text to the active bridge run',
       destroy: 'Release the bridge agent for this session',
       reloadMcp: 'Reload MCP servers',
+      reloadSkills: 'Reload skill commands',
     },
     attachFiles: 'Attach files',
     reasoningEffort: {

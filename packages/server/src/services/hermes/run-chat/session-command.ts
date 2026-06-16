@@ -24,6 +24,7 @@ type CommandName =
   | 'steer'
   | 'destroy'
   | 'reload-mcp'
+  | 'reload-skills'
 
 interface ParsedSessionCommand {
   name: CommandName
@@ -60,6 +61,8 @@ const COMMAND_ALIASES: Record<string, CommandName> = {
   steer: 'steer',
   destroy: 'destroy',
   'reload-mcp': 'reload-mcp',
+  'reload-skills': 'reload-skills',
+  reload_skills: 'reload-skills',
 }
 
 export function parseSessionCommand(input: string | ContentBlock[]): ParsedSessionCommand | null {
@@ -603,6 +606,34 @@ export async function handleSessionCommand(
       return
     }
 
+    case 'reload-skills': {
+      if (state.isWorking) {
+        emitCommand({
+          ok: false,
+          action: 'reload-skills',
+          terminal: false,
+          message: 'Skills reload can only run while the session is idle. Wait for the current run to finish or abort it first.',
+        })
+        return
+      }
+      try {
+        const result = await reloadSkillsThroughBridge(ctx, sessionId)
+        emitCommand({
+          action: 'reload-skills',
+          message: formatReloadSkillsMessage(result),
+          result,
+        })
+      } catch (err) {
+        emitCommand({
+          ok: false,
+          action: 'reload-skills',
+          terminal: !state.isWorking,
+          message: `Skills reload failed: ${err instanceof Error ? err.message : String(err)}`,
+        })
+      }
+      return
+    }
+
     case 'destroy': {
       const wasWorking = state.isWorking
       let bridgeReachable = true
@@ -745,6 +776,55 @@ function parseGoalTurnProgress(message: string): { used: number; max: number } |
   const max = Number(match[2])
   if (!Number.isFinite(used) || !Number.isFinite(max) || max <= 0) return null
   return { used, max }
+}
+
+async function reloadSkillsThroughBridge(
+  ctx: SessionCommandContext,
+  sessionId: string,
+): Promise<Record<string, unknown>> {
+  try {
+    return await ctx.bridge.reloadSkills(ctx.profile)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    if (!message.includes('unknown action: skills_reload')) throw err
+  }
+
+  const result = await ctx.bridge.command(sessionId, 'reload-skills', ctx.profile)
+  if (result.handled && result.action === 'reload-skills') return result
+  throw new Error(
+    'The running Agent Bridge does not support /reload-skills yet. Restart the bridge and try again.',
+  )
+}
+
+function formatReloadSkillsMessage(result: Record<string, unknown>): string {
+  const added = Array.isArray(result.added) ? result.added : []
+  const removed = Array.isArray(result.removed) ? result.removed : []
+  const total = typeof result.total === 'number' && Number.isFinite(result.total)
+    ? result.total
+    : null
+  const lines = ['Skills reloaded successfully.']
+  if (!added.length && !removed.length) {
+    lines.push(total === null ? 'No skill changes detected.' : `No skill changes detected. Total skills: ${total}.`)
+    return lines.join('\n')
+  }
+  if (added.length) {
+    lines.push('Added skills:')
+    for (const item of added) lines.push(`- ${formatReloadSkillItem(item)}`)
+  }
+  if (removed.length) {
+    lines.push('Removed skills:')
+    for (const item of removed) lines.push(`- ${formatReloadSkillItem(item)}`)
+  }
+  if (total !== null) lines.push(`Total skills: ${total}.`)
+  return lines.join('\n')
+}
+
+function formatReloadSkillItem(item: unknown): string {
+  if (!item || typeof item !== 'object') return String(item || '')
+  const record = item as Record<string, unknown>
+  const name = typeof record.name === 'string' ? record.name : ''
+  const description = typeof record.description === 'string' ? record.description : ''
+  return description ? `${name}: ${description}` : name
 }
 
 function ensureCommandSession(sessionId: string, ctx: SessionCommandContext) {

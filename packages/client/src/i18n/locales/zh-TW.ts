@@ -445,6 +445,7 @@ export default {
       steer: '向目前 Bridge 執行傳送引導文字',
       destroy: '釋放目前會話的 Bridge Agent',
       reloadMcp: '重載 MCP 伺服器',
+      reloadSkills: '重載技能命令',
     },
     attachFiles: '新增附件',
     reasoningEffort: {

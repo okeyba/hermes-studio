@@ -363,6 +363,8 @@ export default {
       compress: 'Запустить сжатие контекста в простое',
       steer: 'Отправить направляющий текст текущему запуску Bridge',
       destroy: 'Освободить Bridge Agent текущего сеанса',
+      reloadMcp: 'Перезагрузить серверы MCP',
+      reloadSkills: 'Перезагрузить команды skills',
     },
     attachFiles: 'Прикрепить файлы',
     reasoningEffort: {

@@ -445,6 +445,7 @@ export default {
       steer: '実行中の Bridge に誘導テキストを送信',
       destroy: 'このセッションの Bridge Agent を解放',
       reloadMcp: 'MCP サーバーを再読み込み',
+      reloadSkills: 'スキルコマンドを再読み込み',
     },
     attachFiles: 'ファイルを添付',
     reasoningEffort: {

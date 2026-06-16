@@ -445,6 +445,7 @@ export default {
       steer: 'Steuertext an den aktiven Bridge-Lauf senden',
       destroy: 'Bridge-Agent für diese Sitzung freigeben',
       reloadMcp: 'MCP-Server neu laden',
+      reloadSkills: 'Skill-Befehle neu laden',
     },
     attachFiles: 'Dateien anhangen',
     reasoningEffort: {

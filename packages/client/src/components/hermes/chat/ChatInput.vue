@@ -196,6 +196,7 @@ const bridgeCommands = computed<SlashCommandOption[]>(() => [
   { key: 'command:steer', name: 'steer', args: t('chat.slashCommandArgs.text'), description: t('chat.slashCommands.steer') },
   { key: 'command:destroy', name: 'destroy', args: '', description: t('chat.slashCommands.destroy') },
   { key: 'command:reload-mcp', name: 'reload-mcp', args: '', description: t('chat.slashCommands.reloadMcp') },
+  { key: 'command:reload-skills', name: 'reload-skills', args: '', description: t('chat.slashCommands.reloadSkills') },
 ])
 
 const slashActive = ref(false)
@@ -1088,17 +1089,20 @@ function isImage(type: string): boolean {
             {{ t('common.loading') }}
           </div>
           <template v-else>
-            <button
+            <div
               v-for="skill in filteredSkillPickerItems"
               :key="skill.key"
-              type="button"
+              role="button"
+              tabindex="0"
               class="skill-picker-item"
               @click="selectSkill(skill)"
+              @keydown.enter.prevent="selectSkill(skill)"
+              @keydown.space.prevent="selectSkill(skill)"
             >
-              <span class="skill-picker-command">/skill {{ skill.commandName }}</span>
-              <span class="skill-picker-name">{{ skill.name }}</span>
-              <span class="skill-picker-desc">{{ skill.description }}</span>
-            </button>
+              <div class="skill-picker-command">/skill {{ skill.commandName }}</div>
+              <div class="skill-picker-name">{{ skill.name }}</div>
+              <div class="skill-picker-desc">{{ skill.description }}</div>
+            </div>
           </template>
           <div v-if="!skillPickerLoading && filteredSkillPickerItems.length === 0" class="skill-picker-empty">
             {{ skillSearch ? t('skills.noMatch') : t('skills.noSkills') }}
@@ -1540,20 +1544,22 @@ function isImage(type: string): boolean {
 }
 
 .skill-picker-item {
-  display: grid;
-  grid-template-columns: minmax(160px, auto) minmax(120px, 0.6fr) minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
+  display: block;
+  flex: 0 0 76px;
   width: 100%;
-  min-height: 42px;
-  padding: 8px 10px;
+  height: 76px;
+  box-sizing: border-box;
+  padding: 7px 10px;
   border: 1px solid $border-color;
   border-radius: $radius-sm;
   background: $bg-secondary;
   color: $text-primary;
   text-align: left;
   cursor: pointer;
+  overflow: hidden;
+  outline: none;
 
+  &:focus-visible,
   &:hover {
     border-color: rgba(var(--accent-primary-rgb), 0.5);
     background: rgba(var(--accent-primary-rgb), 0.08);
@@ -1561,27 +1567,37 @@ function isImage(type: string): boolean {
 }
 
 .skill-picker-command {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-family: $font-code;
   font-size: 12px;
+  line-height: 16px;
   color: $accent-primary;
   white-space: nowrap;
 }
 
 .skill-picker-name,
 .skill-picker-desc {
-  min-width: 0;
+  display: block;
+  width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .skill-picker-name {
+  margin-top: 3px;
   font-size: 13px;
+  line-height: 18px;
   color: $text-primary;
 }
 
 .skill-picker-desc {
+  margin-top: 3px;
   font-size: 12px;
+  line-height: 16px;
   color: $text-secondary;
 }
 
@@ -1594,8 +1610,7 @@ function isImage(type: string): boolean {
 
 @media (max-width: 768px) {
   .skill-picker-item {
-    grid-template-columns: 1fr;
-    gap: 4px;
+    height: 76px;
   }
 }
 

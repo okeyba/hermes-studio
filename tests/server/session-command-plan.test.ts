@@ -60,6 +60,15 @@ function makeContext(state: any, commandResult: Record<string, unknown> = {
   const bridge = {
     command: vi.fn(async () => commandResult),
     mcpReload: vi.fn(async () => ({ ok: true, message: 'MCP servers reloaded' })),
+    reloadSkills: vi.fn(async () => ({
+      ok: true,
+      action: 'reload-skills',
+      added: [{ name: 'demo-external-skill', description: 'Demo skill' }],
+      removed: [],
+      unchanged: [],
+      total: 1,
+      commands: 1,
+    })),
     status: vi.fn(async () => ({
       exists: true,
       running: false,
@@ -437,6 +446,58 @@ describe('plan session command', () => {
       action: 'reload-mcp',
       terminal: false,
       message: 'MCP reload can only run while the session is idle. Wait for the current run to finish or abort it first.',
+    }))
+  })
+
+  it('reloads skills while idle without queuing a model run', async () => {
+    const state = { messages: [], isWorking: false, events: [], queue: [] }
+    const { bridge, namespaceEmit, runQueuedItem, sessionMap, socket, nsp } = makeContext(state)
+    const { handleSessionCommand, parseSessionCommand } = await import('../../packages/server/src/services/hermes/run-chat/session-command')
+    const command = parseSessionCommand('/reload-skills')!
+
+    await handleSessionCommand('session-1', command, {
+      nsp: nsp as any,
+      socket: socket as any,
+      sessionMap,
+      bridge: bridge as any,
+      profile: 'default',
+      runQueuedItem,
+    })
+
+    expect(bridge.reloadSkills).toHaveBeenCalledWith('default')
+    expect(runQueuedItem).not.toHaveBeenCalled()
+    expect(state.queue).toEqual([])
+    expect(namespaceEmit).toHaveBeenCalledWith('session.command', expect.objectContaining({
+      command: 'reload-skills',
+      action: 'reload-skills',
+      message: 'Skills reloaded successfully.\nAdded skills:\n- demo-external-skill: Demo skill\nTotal skills: 1.',
+    }))
+  })
+
+  it('rejects skills reload while the session is running', async () => {
+    const state = { messages: [], isWorking: true, events: [], queue: [] }
+    const { bridge, namespaceEmit, runQueuedItem, sessionMap, socket, nsp } = makeContext(state)
+    const { handleSessionCommand, parseSessionCommand } = await import('../../packages/server/src/services/hermes/run-chat/session-command')
+    const command = parseSessionCommand('/reload-skills')!
+
+    await handleSessionCommand('session-1', command, {
+      nsp: nsp as any,
+      socket: socket as any,
+      sessionMap,
+      bridge: bridge as any,
+      profile: 'default',
+      runQueuedItem,
+    })
+
+    expect(bridge.reloadSkills).not.toHaveBeenCalled()
+    expect(runQueuedItem).not.toHaveBeenCalled()
+    expect(state.queue).toEqual([])
+    expect(namespaceEmit).toHaveBeenCalledWith('session.command', expect.objectContaining({
+      command: 'reload-skills',
+      ok: false,
+      action: 'reload-skills',
+      terminal: false,
+      message: 'Skills reload can only run while the session is idle. Wait for the current run to finish or abort it first.',
     }))
   })
 })
